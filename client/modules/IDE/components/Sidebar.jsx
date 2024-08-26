@@ -16,6 +16,7 @@ import { getAuthenticated, selectCanEditSketch } from '../selectors/users';
 import ConnectedFileNode from './FileNode';
 import { PlusIcon } from '../../../common/icons';
 import { FileDrawer } from './Editor/MobileEditor';
+import SideBarSearch from './SideBarSearch';
 
 // TODO: use a generic Dropdown UI component
 
@@ -100,6 +101,7 @@ export default function SideBar() {
             >
               <PlusIcon focusable="false" aria-hidden="true" />
             </button>
+            <SideBarSearch />
             <ul className="sidebar__project-options">
               <li>
                 <button
