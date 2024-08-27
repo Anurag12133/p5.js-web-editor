@@ -35,7 +35,19 @@ const Searchbar = ({
     setSearchValue(searchTerm);
   }, [searchTerm]);
 
-  return <div></div>;
+  return (
+    <div>
+      <input
+        type="text"
+        value={searchValue}
+        onChange={handleSearchChange}
+        placeholder={searchLabel}
+      />
+      {searchValue && (
+        <button onClick={handleResetSearch}>{t('Searchbar.Clear')}</button>
+      )}
+    </div>
+  );
 };
 
 Searchbar.propTypes = {

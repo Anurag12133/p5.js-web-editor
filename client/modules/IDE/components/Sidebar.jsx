@@ -101,7 +101,6 @@ export default function SideBar() {
             >
               <PlusIcon focusable="false" aria-hidden="true" />
             </button>
-            <SideBarSearch />
             <ul className="sidebar__project-options">
               <li>
                 <button
@@ -147,6 +146,9 @@ export default function SideBar() {
             </ul>
           </div>
         </header>
+        <div>
+          <SideBarSearch />
+        </div>
         <ConnectedFileNode id={rootFile.id} canEdit={canEditProject} />
       </section>
     </FileDrawer>
