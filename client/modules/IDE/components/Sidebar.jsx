@@ -16,9 +16,6 @@ import { getAuthenticated, selectCanEditSketch } from '../selectors/users';
 import ConnectedFileNode from './FileNode';
 import { PlusIcon } from '../../../common/icons';
 import { FileDrawer } from './Editor/MobileEditor';
-import SideBarSearch from './SideBarSearch';
-
-// TODO: use a generic Dropdown UI component
 
 export default function SideBar() {
   const { t } = useTranslation();
@@ -31,34 +28,26 @@ export default function SideBar() {
   );
   const isExpanded = useSelector((state) => state.ide.sidebarIsExpanded);
   const canEditProject = useSelector(selectCanEditSketch);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [matchedFileId, setMatchedFileId] = useState(null);
 
   const sidebarOptionsRef = useRef(null);
-
-  const [isFocused, setIsFocused] = useState(false);
-
   const isAuthenticated = useSelector(getAuthenticated);
 
-  const onBlurComponent = () => {
-    setIsFocused(false);
-    setTimeout(() => {
-      if (!isFocused) {
-        dispatch(closeProjectOptions());
-      }
-    }, 200);
-  };
-
-  const onFocusComponent = () => {
-    setIsFocused(true);
-  };
-
-  const toggleProjectOptions = (e) => {
-    e.preventDefault();
-    if (projectOptionsVisible) {
-      dispatch(closeProjectOptions());
-    } else {
-      sidebarOptionsRef.current?.focus();
-      dispatch(openProjectOptions());
+  const findMatchingFile = (file, query) => {
+    if (file.name && file.name.toLowerCase() === query.toLowerCase()) {
+      return file;
     }
+    if (file.children) {
+      return file.children.find((child) => findMatchingFile(child, query));
+    }
+    return null;
+  };
+
+  const handleSearchQuery = (e) => {
+    setSearchQuery(e.target.value);
+    const matchedFile = findMatchingFile(rootFile, e.target.value);
+    setMatchedFileId(matchedFile ? matchedFile.id : null);
   };
 
   const sidebarClass = classNames({
@@ -84,7 +73,15 @@ export default function SideBar() {
       <section className={sidebarClass}>
         <header
           className="sidebar__header"
-          onContextMenu={toggleProjectOptions}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            if (projectOptionsVisible) {
+              dispatch(closeProjectOptions());
+            } else {
+              sidebarOptionsRef.current?.focus();
+              dispatch(openProjectOptions());
+            }
+          }}
         >
           <h3 className="sidebar__title">
             <span>{t('Sidebar.Title')}</span>
@@ -95,61 +92,33 @@ export default function SideBar() {
               className="sidebar__add"
               tabIndex="0"
               ref={sidebarOptionsRef}
-              onClick={toggleProjectOptions}
-              onBlur={onBlurComponent}
-              onFocus={onFocusComponent}
+              onClick={(e) => {
+                e.preventDefault();
+                if (projectOptionsVisible) {
+                  dispatch(closeProjectOptions());
+                } else {
+                  sidebarOptionsRef.current?.focus();
+                  dispatch(openProjectOptions());
+                }
+              }}
             >
               <PlusIcon focusable="false" aria-hidden="true" />
             </button>
-            <ul className="sidebar__project-options">
-              <li>
-                <button
-                  aria-label={t('Sidebar.AddFolderARIA')}
-                  onClick={() => {
-                    dispatch(newFolder(rootFile.id));
-                    setTimeout(() => dispatch(closeProjectOptions()), 0);
-                  }}
-                  onBlur={onBlurComponent}
-                  onFocus={onFocusComponent}
-                >
-                  {t('Sidebar.AddFolder')}
-                </button>
-              </li>
-              <li>
-                <button
-                  aria-label={t('Sidebar.AddFileARIA')}
-                  onClick={() => {
-                    dispatch(newFile(rootFile.id));
-                    setTimeout(() => dispatch(closeProjectOptions()), 0);
-                  }}
-                  onBlur={onBlurComponent}
-                  onFocus={onFocusComponent}
-                >
-                  {t('Sidebar.AddFile')}
-                </button>
-              </li>
-              {isAuthenticated && (
-                <li>
-                  <button
-                    aria-label={t('Sidebar.UploadFileARIA')}
-                    onClick={() => {
-                      dispatch(openUploadFileModal(rootFile.id));
-                      setTimeout(() => dispatch(closeProjectOptions()), 0);
-                    }}
-                    onBlur={onBlurComponent}
-                    onFocus={onFocusComponent}
-                  >
-                    {t('Sidebar.UploadFile')}
-                  </button>
-                </li>
-              )}
-            </ul>
           </div>
         </header>
         <div>
-          <SideBarSearch />
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchQuery}
+            onChange={handleSearchQuery}
+          />
         </div>
-        <ConnectedFileNode id={rootFile.id} canEdit={canEditProject} />
+        <ConnectedFileNode
+          id={rootFile.id}
+          searchQuery={searchQuery}
+          matchedFileId={matchedFileId}
+        />
       </section>
     </FileDrawer>
   );
